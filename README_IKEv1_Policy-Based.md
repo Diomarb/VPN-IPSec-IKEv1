@@ -1,8 +1,5 @@
 # VPN Site-to-Site IPSec IKEv1 — Basada en Políticas
 
-**Estudiante:** Euni  
-**Matrícula:** 2024-1185  
-**Institución:** Instituto Tecnológico de las Américas (ITLA)  
 **Asignatura:** Seguridad de Redes  
 
 ---
@@ -14,11 +11,8 @@ Implementar una VPN Site-to-Site punto a punto utilizando el protocolo **IPSec c
 ---
 
 ## Topología
+ <img width="784" height="644" alt="image" src="https://github.com/user-attachments/assets/54dd9715-2951-450b-8481-59f228be3ea3" />
 
-```
-[PC1]──[SW1]──[R1]──────[ISP]──────[R2]──[SW2]──[PC2]
-              e0/1  e0/0      e0/1  e0/0  e0/1
-```
 
 ### Direccionamiento IP
 
@@ -211,28 +205,4 @@ show crypto ipsec sa
 
 ---
 
-## Contramédidas
 
-| Amenaza                        | Contramédida                                              |
-|-------------------------------|-----------------------------------------------------------|
-| Interceptación de tráfico      | Cifrado AES-256 garantiza confidencialidad               |
-| Modificación de paquetes       | HMAC SHA-256 verifica integridad                         |
-| Replay attacks                 | Anti-replay habilitado por defecto en ESP                |
-| Clave débil                    | Grupo DH 14 (2048-bit) para intercambio seguro de claves |
-| Acceso no autorizado           | Pre-shared key requerida para levantar el túnel          |
-
----
-
-## Diferencia clave: Policy-based vs Route-based
-
-| Característica          | Policy-based (esta lab)         | Route-based                     |
-|------------------------|----------------------------------|----------------------------------|
-| Selección de tráfico   | ACL extendida                    | Interfaz de túnel virtual (VTI)  |
-| Interfaz de túnel      | No existe                        | Tunnel0 (virtual)                |
-| Enrutamiento dinámico  | No soportado directamente        | Soportado (OSPF, EIGRP, etc.)    |
-| Escalabilidad          | Limitada                         | Mayor                            |
-| Complejidad config.    | Menor                            | Mayor                            |
-
----
-
-*Documento generado para fines académicos — ITLA 2024-1185*
