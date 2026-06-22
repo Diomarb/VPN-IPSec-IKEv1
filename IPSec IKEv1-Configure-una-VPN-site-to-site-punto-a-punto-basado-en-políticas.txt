@@ -1,0 +1,150 @@
+R1
+---------------------------------
+
+configure terminal
+
+hostname R1
+
+interface Ethernet0/0
+ description WAN hacia ISP
+ ip address 10.11.85.65 255.255.255.192
+ no shutdown
+
+interface Ethernet0/1
+ description LAN hacia SW1-PC1
+ ip address 10.11.85.1 255.255.255.192
+ no shutdown
+
+ip route 0.0.0.0 0.0.0.0 10.11.85.66
+
+crypto isakmp policy 10
+ encr aes 256
+ hash sha256
+ authentication pre-share
+ group 14
+ lifetime 86400
+
+
+crypto isakmp key ITLA2024 address 10.11.85.130
+
+crypto ipsec transform-set TS-IKEV1 esp-aes 256 esp-sha256-hmac
+ mode tunnel
+
+ip access-list extended ACL-VPN-R1
+ permit ip 10.11.85.0 0.0.0.63 10.11.85.192 0.0.0.63
+
+
+crypto map CM-IKEV1 10 ipsec-isakmp
+ set peer 10.11.85.130
+ set transform-set TS-IKEV1
+ match address ACL-VPN-R1
+
+interface Ethernet0/0
+ crypto map CM-IKEV1
+
+end
+
+
+
+
+-------------------------------------
+R2
+-------------------------------------
+
+configure terminal
+
+hostname R2
+
+interface Ethernet0/0
+ description WAN hacia ISP
+ ip address 10.11.85.130 255.255.255.192
+ no shutdown
+
+interface Ethernet0/1
+ description LAN hacia SW2-PC2
+ ip address 10.11.85.193 255.255.255.192
+ no shutdown
+
+
+ip route 0.0.0.0 0.0.0.0 10.11.85.129
+
+
+
+crypto isakmp policy 10
+ encr aes 256
+ hash sha256
+ authentication pre-share
+ group 14
+ lifetime 86400
+
+crypto isakmp key ITLA2024 address 10.11.85.65
+
+
+crypto ipsec transform-set TS-IKEV1 esp-aes 256 esp-sha256-hmac
+ mode tunnel
+
+ip access-list extended ACL-VPN-R2
+ permit ip 10.11.85.192 0.0.0.63 10.11.85.0 0.0.0.63
+
+crypto map CM-IKEV1 10 ipsec-isakmp
+ set peer 10.11.85.65
+ set transform-set TS-IKEV1
+ match address ACL-VPN-R2
+
+interface Ethernet0/0
+ crypto map CM-IKEV1
+
+end
+
+
+
+
+----------------------------------
+ISP
+----------------------------------
+
+configure terminal
+
+hostname ISP
+
+interface Ethernet0/0
+ description Hacia R1
+ ip address 10.11.85.66 255.255.255.192
+ no shutdown
+
+interface Ethernet0/1
+ description Hacia R2
+ ip address 10.11.85.129 255.255.255.192
+ no shutdown
+
+end
+
+
+-----------------------------------------
+VPC1 Y 2
+-----------------------------------------
+
+! ─────────────────────────────────
+!  PC1 (conectado a SW1 → R1 e0/1)
+! ─────────────────────────────────
+ip 10.11.85.2 255.255.255.192 10.11.85.1
+save
+
+
+ping 10.11.85.1
+
+! Verificar que el túnel funciona (ping a PC2 al otro lado)
+ping 10.11.85.194
+
+
+! ─────────────────────────────────
+!  PC2 (conectado a SW2 → R2 e0/1)
+! ─────────────────────────────────
+ip 10.11.85.194 255.255.255.192 10.11.85.193
+save
+
+
+ping 10.11.85.193
+
+! Verificar que el túnel funciona (ping a PC1 al otro lado)
+ping 10.11.85.2
