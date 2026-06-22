@@ -1,0 +1,169 @@
+============================================================
+  R1 
+
+enable
+configure terminal
+
+hostname R1
+
+
+interface Ethernet0/0
+ description WAN hacia ISP
+ ip address 10.11.85.65 255.255.255.192
+ no shutdown
+
+interface Ethernet0/1
+ description LAN hacia SW1-PC1
+ ip address 10.11.85.1 255.255.255.192
+ no shutdown
+
+
+
+ip route 0.0.0.0 0.0.0.0 10.11.85.66
+
+
+interface Tunnel0
+ description GRE Tunnel hacia R2
+ ip address 10.10.10.1 255.255.255.252
+ tunnel source Ethernet0/0
+ tunnel destination 10.11.85.130
+ tunnel mode gre ip
+ no shutdown
+
+
+ip route 10.11.85.192 255.255.255.192 Tunnel0
+
+
+crypto isakmp policy 10
+ encr aes 256
+ hash sha256
+ authentication pre-share
+ group 14
+ lifetime 86400
+
+crypto isakmp key ITLA2024 address 10.11.85.130
+
+
+crypto ipsec transform-set TS-GRE esp-aes 256 esp-sha256-hmac
+ mode transport
+
+
+ip access-list extended ACL-GRE-VPN
+ permit gre host 10.11.85.65 host 10.11.85.130
+
+
+crypto map CM-GRE 10 ipsec-isakmp
+ set peer 10.11.85.130
+ set transform-set TS-GRE
+ match address ACL-GRE-VPN
+
+interface Ethernet0/0
+ crypto map CM-GRE
+
+end
+
+
+
+
+============================================================
+  R2 
+
+enable
+configure terminal
+
+hostname R2
+
+
+interface Ethernet0/0
+ description WAN hacia ISP
+ ip address 10.11.85.130 255.255.255.192
+ no shutdown
+
+interface Ethernet0/1
+ description LAN hacia SW2-PC2
+ ip address 10.11.85.193 255.255.255.192
+ no shutdown
+
+
+ip route 0.0.0.0 0.0.0.0 10.11.85.129
+
+
+interface Tunnel0
+ description GRE Tunnel hacia R1
+ ip address 10.10.10.2 255.255.255.252
+ tunnel source Ethernet0/0
+ tunnel destination 10.11.85.65
+ tunnel mode gre ip
+ no shutdown
+
+
+ip route 10.11.85.0 255.255.255.192 Tunnel0
+
+
+crypto isakmp policy 10
+ encr aes 256
+ hash sha256
+ authentication pre-share
+ group 14
+ lifetime 86400
+
+crypto isakmp key ITLA2024 address 10.11.85.65
+
+
+crypto ipsec transform-set TS-GRE esp-aes 256 esp-sha256-hmac
+ mode transport
+
+
+ip access-list extended ACL-GRE-VPN
+ permit gre host 10.11.85.130 host 10.11.85.65
+
+crypto map CM-GRE 10 ipsec-isakmp
+ set peer 10.11.85.65
+ set transform-set TS-GRE
+ match address ACL-GRE-VPN
+
+interface Ethernet0/0
+ crypto map CM-GRE
+
+end
+
+
+----------------------------------
+ISP
+----------------------------------
+
+configure terminal
+
+hostname ISP
+
+interface Ethernet0/0
+ description Hacia R1
+ ip address 10.11.85.66 255.255.255.192
+ no shutdown
+
+interface Ethernet0/1
+ description Hacia R2
+ ip address 10.11.85.129 255.255.255.192
+ no shutdown
+
+end
+
+
+-----------------------------------------
+VPC1 Y 2
+-----------------------------------------
+
+! ─────────────────────────────────
+!  PC1 (conectado a SW1 → R1 e0/1)
+! ─────────────────────────────────
+ip 10.11.85.2 255.255.255.192 10.11.85.1
+save
+
+! ─────────────────────────────────
+!  PC2 (conectado a SW2 → R2 e0/1)
+! ─────────────────────────────────
+ip 10.11.85.194 255.255.255.192 10.11.85.193
+save
+
+
+
